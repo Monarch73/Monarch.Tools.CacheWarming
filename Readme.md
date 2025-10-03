@@ -26,7 +26,7 @@ cd <your-directory>
 2. Run the tool:
 
 ```
-cachewarming
+cachewarmup
 ```
   
 
