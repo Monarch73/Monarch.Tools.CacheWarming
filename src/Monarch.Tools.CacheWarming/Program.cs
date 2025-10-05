@@ -10,7 +10,7 @@ const int BufferSize = 81920; // 80 KB buffer, a common size that works well wit
 
 // --- Main Execution ---
 string startPath = Directory.GetCurrentDirectory();
-Console.WriteLine($"🔥 Starting filesystem cache warm-up...");
+Console.WriteLine($"  Starting filesystem cache warm-up...");
 Console.WriteLine($"   Root Directory: {startPath}");
 Console.WriteLine($"   Ignoring symbolic links and junctions.");
 Console.WriteLine("-------------------------------------------------");
@@ -30,7 +30,7 @@ stopwatch.Stop();
 
 // --- Final Report ---
 Console.WriteLine("-------------------------------------------------");
-Console.WriteLine("✅ Warm-up complete.");
+Console.WriteLine("  Warm-up complete.");
 Console.WriteLine($"   Directories Scanned: {directoriesScanned:N0}");
 Console.WriteLine($"   Files Processed:     {filesProcessed:N0}");
 Console.WriteLine($"   Total Bytes Read:    {totalBytesRead / 1024.0 / 1024.0:N2} MB");
@@ -45,13 +45,6 @@ Console.WriteLine($"   Elapsed Time:        {stopwatch.Elapsed.TotalSeconds:N2} 
 /// </summary>
 void ProcessDirectory(DirectoryInfo dirInfo)
 {
-    // Check if the directory is a symbolic link or junction point. If so, skip it.
-    if ((dirInfo.Attributes & FileAttributes.ReparsePoint) != 0)
-    {
-        Console.WriteLine($"   -> Skipping junction/symlink: {dirInfo.FullName}");
-        return;
-    }
-
     Interlocked.Increment(ref directoriesScanned);
 
     try
@@ -69,7 +62,15 @@ void ProcessDirectory(DirectoryInfo dirInfo)
         // 2. Recursively process all subdirectories.
         foreach (var subDirInfo in dirInfo.EnumerateDirectories())
         {
-            ProcessDirectory(subDirInfo);
+            // Check if the directory is a symbolic link or junction point. If so, skip it.
+            if ((subDirInfo.Attributes & FileAttributes.ReparsePoint) != 0)
+            {
+                Console.WriteLine($"   -> Skipping junction/symlink: {subDirInfo.FullName}");
+            }
+            else
+            {
+                ProcessDirectory(subDirInfo);
+            }
         }
     }
     catch (UnauthorizedAccessException)
