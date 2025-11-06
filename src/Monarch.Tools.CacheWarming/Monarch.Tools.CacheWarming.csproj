@@ -14,7 +14,7 @@
     <Nullable>enable</Nullable>
 	<PackAsTool>true</PackAsTool>
     <!-- Make sure runtime-specific tool packages can be produced for Windows RIDs -->
-    <RuntimeIdentifiers>win-x64;win-x86;win-arm64</RuntimeIdentifiers>
+    <RuntimeIdentifiers>win-x64;win-x86;win-arm64;linux-x64</RuntimeIdentifiers>
   <PackageTags>cache warming performance</PackageTags>
 	<ToolCommandName>cachewarmup</ToolCommandName>
 	<PackageOutputPath>./nupkg</PackageOutputPath>

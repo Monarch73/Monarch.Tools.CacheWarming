@@ -9,6 +9,14 @@ Install the tool globally using the following command:
 dotnet tool install Monarch75.Tools.CacheWarming -g
 ```
 
+## Update
+
+To update the tool to the latest version, use the following command:
+
+```
+dotnet tool update Monarch75.Tools.CacheWarming -g
+```
+
   
 
 ## Usage

@@ -1,4 +1,4 @@
-name: Build and publish NuGet tool (Windows nupkg)
+name: Build and publish NuGet tool
 
 on:
   push:
@@ -6,8 +6,15 @@ on:
 
 jobs:
   build-pack-publish:
-    name: Build, pack (win-x64) and publish
-    runs-on: ubuntu-latest
+    name: Build, pack (${{ matrix.rid }}) and publish
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+          - os: ubuntu-latest
+            rid: linux-x64
 
     steps:
       - name: Checkout repository (full history for GitVersion)
@@ -30,27 +37,31 @@ jobs:
         uses: gittools/actions/gitversion/execute@v0.9
 
       - name: Show computed version
+        shell: pwsh
         run: |
           echo "GitVersion NuGetVersionV2=${{ steps.gitversion.outputs.NuGetVersionV2 }}"
 
       - name: Restore
         run: dotnet restore
 
-      - name: Pack tool for Windows (win-x64)
+      - name: Pack tool for ${{ matrix.rid }}
+        shell: pwsh
         run: |
           echo "Packing with version: ${{ steps.gitversion.outputs.NuGetVersionV2 }}"
-          dotnet pack src/Monarch.Tools.CacheWarming/Monarch.Tools.CacheWarming.csproj -c Release -o ./nupkg -p:PackageVersion=${{ steps.gitversion.outputs.NuGetVersionV2 }} -p:RuntimeIdentifier=win-x64
+          dotnet pack src/Monarch.Tools.CacheWarming/Monarch.Tools.CacheWarming.csproj -c Release -o ./nupkg -p:PackageVersion=${{ steps.gitversion.outputs.NuGetVersionV2 }} -p:RuntimeIdentifier=${{ matrix.rid }}
 
       - name: List produced packages
-        run: ls -la ./nupkg || true
+        shell: pwsh
+        run: Get-ChildItem -Path ./nupkg
 
       - name: Publish package to nuget.org
+        shell: pwsh
         env:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
         run: |
-          if [ -z "$NUGET_API_KEY" ]; then
-            echo "ERROR: NUGET_API_KEY secret is not set in repository settings";
-            exit 1;
-          fi
-          echo "Pushing nupkg to nuget.org (owner on nuget.org: Monarch75)"
-          dotnet nuget push ./nupkg/*.nupkg -k "$NUGET_API_KEY" -s https://api.nuget.org/v3/index.json --skip-duplicate
+          if ([string]::IsNullOrEmpty($env:NUGET_API_KEY)) {
+            Write-Error "ERROR: NUGET_API_KEY secret is not set in repository settings"
+            exit 1
+          }
+          Write-Host "Pushing nupkg to nuget.org (owner on nuget.org: Monarch75)"
+          dotnet nuget push ./nupkg/*.nupkg -k "$env:NUGET_API_KEY" -s https://api.nuget.org/v3/index.json --skip-duplicate
