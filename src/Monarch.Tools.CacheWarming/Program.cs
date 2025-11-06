@@ -42,9 +42,32 @@ var progressBarOptions = new ProgressBarOptions
 
 using (var pbar = new ProgressBar((int)((long)totalBytes/1024/1024), "Warming up files...", progressBarOptions))
 {
-    foreach (var fileInfo in allFiles)
+    // Start a background task to update the progress bar every second
+    var progressUpdateCts = new CancellationTokenSource();
+    var progressTask = Task.Run(async () =>
     {
-        ProcessFile(fileInfo, pbar);
+        while (!progressUpdateCts.Token.IsCancellationRequested)
+        {
+            pbar.Tick((int)((long)totalBytesRead/1024/1024), "Continued reading...");
+            await Task.Delay(1000, progressUpdateCts.Token);
+        }
+    });
+
+    try
+    {
+        foreach (var fileInfo in allFiles)
+        {
+            ProcessFile(fileInfo, pbar);
+        }
+    }
+    finally
+    {
+        progressUpdateCts.Cancel();
+        try
+        {
+            progressTask.Wait();
+        }
+        catch (AggregateException) { } // Ignore task cancellation
     }
 }
 
@@ -122,8 +145,6 @@ void ProcessFile(FileInfo fileInfo, IProgressBar pbar)
         {
             Interlocked.Add(ref totalBytesRead, bytesRead);
         }
-        totalBytesRead += bytesRead;
-        pbar.Tick((int)((long)totalBytesRead/1024/1024), "Continued reading...");
         Interlocked.Increment(ref filesProcessed);
     }
     catch (UnauthorizedAccessException)
