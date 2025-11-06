@@ -42,11 +42,7 @@ jobs:
       - name: Pack tool for Windows (win-x64)
         run: |
           echo "Packing with version: ${{ steps.gitversion.outputs.NuGetVersionV2 }}"
-          dotnet pack src/Monarch.Tools.CacheWarming/Monarch.Tools.CacheWarming.csproj \
-            -c Release \
-            -o ./nupkg \
-            -p:PackageVersion=${{ steps.gitversion.outputs.NuGetVersionV2 }} \
-            -r win-x64 --no-build
+          dotnet pack src/Monarch.Tools.CacheWarming/Monarch.Tools.CacheWarming.csproj -c Release -o ./nupkg -p:PackageVersion=${{ steps.gitversion.outputs.NuGetVersionV2 }} -p:RuntimeIdentifier=win-x64 --no-build
 
       - name: List produced packages
         run: ls -la ./nupkg || true
